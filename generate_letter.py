@@ -36,22 +36,18 @@ def get_legislator_info(address):
     }
     response = requests.get('https://www.googleapis.com/civicinfo/v2/representatives?key='+civic_api_key, params=payload)
     response = response.json()
-    return response.get('officials')
+    legislators = response.get('officials')
+    if legislators:
+        return legislators.pop()
+    else:
+        return None
 
 
 # Compose and send a letter using the Lob api
-def send_letter(from_address, message_payload):
+def send_letter(from_address, to_address, message_payload):
     letter = lob.Letter.create(
       description = 'Letter to legislator',
-      to_address = {
-          'name': 'Harry Zhang',
-          'address_line1': '185 Berry St',
-          'address_line2': '# 6100',
-          'address_city': 'San Francisco',
-          'address_state': 'CA',
-          'address_zip': '94107',
-          'address_country': 'US'
-      },
+      to_address = to_address,
       from_address = from_address,
       file = 'tmpl_5c64c3094c0e11c',
       merge_variables = {
@@ -64,3 +60,17 @@ def send_letter(from_address, message_payload):
 
 
 
+def execute():
+    from_address, message_payload = parse_input_args()
+    from_address_str = ', '.join(filter(lambda x: x != '', [from_address.get(key) for key in ['address_line1', 'address_line2', 'address_city', 'address_state', 'address_country']]))
+    legislator_info = get_legislator_info(from_address_str)
+    legislator_name = legislator_info.get('name')
+    to_address = legislator_info.get('address').pop()
+    formatted_to_address = {'name': legislator_name}
+    for key, value in to_address.iteritems():
+        formatted_to_address['address_' + key] = value
+    send_letter(from_address, formatted_to_address, message_payload)
+
+
+if __name__ == '__main__':
+    execute()
