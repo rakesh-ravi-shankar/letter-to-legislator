@@ -55,9 +55,7 @@ def send_letter(from_address, to_address, message_payload):
       },
       color = True
     )
-    print '\n\nLetter Generation Response:'
-    print letter
-
+    print '\n\nLetter: ' + letter.get('url')
 
 
 def execute():
